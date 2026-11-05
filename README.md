@@ -1,5 +1,5 @@
 # gus.ai.org
 
-ai code asistant
+AI code assistant.
 
-<a href="https://asaswehub-dev.github.io/gus.ai.org/Dev%20agent%20(runs%20in%20your%20browser)%20(1).html"><button>Open Dev agent</button></a>
+<a href="https://asaswehub-dev.github.io/gus.ai.org/"><button type="button">Web Access</button></a>
