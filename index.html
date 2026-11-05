@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dev agent</title>
+  <style>
+    html, body, iframe { width: 100%; height: 100%; margin: 0; border: 0; }
+    body { overflow: hidden; }
+  </style>
+</head>
+<body>
+  <iframe id="app" title="Dev agent" src="Dev%20agent%20(runs%20in%20your%20browser)%20(1).html"></iframe>
+  <script>
+    const app = document.getElementById("app");
+    app.addEventListener("load", () => {
+      try {
+        const doc = app.contentDocument;
+        const row = doc.querySelector("#load")?.parentElement;
+        if (!row || doc.getElementById("reset-model")) return;
+
+        const reset = doc.createElement("button");
+        reset.id = "reset-model";
+        reset.className = "go";
+        reset.type = "button";
+        reset.textContent = "Reset model";
+        reset.setAttribute("aria-label", "Reset the AI model and start a fresh conversation");
+        reset.title = "Restart the model and clear this conversation. The downloaded model stays cached.";
+        reset.addEventListener("click", () => {
+          reset.disabled = true;
+          reset.textContent = "Resetting…";
+          // Reloading releases the active engine, clears in-memory conversation state,
+          // and lets the app restore the selected model from its local cache.
+          app.src = app.src;
+        });
+        row.appendChild(reset);
+      } catch (error) {
+        console.error("Could not add the model reset button:", error);
+      }
+    });
+  </script>
+</body>
+</html>
