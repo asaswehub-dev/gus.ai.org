@@ -15,7 +15,7 @@ h1{margin:0;font-size:24px}.sub{margin:4px 0 0;color:var(--muted);font-size:14px
 .panel{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 label{display:block;font-size:13px;color:var(--muted);margin:0 0 4px}
 select,textarea{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px}
-.row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
 button.go{background:var(--on);color:#04201c;border:0;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
 button.reset{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font:inherit;font-size:14px;cursor:pointer}
 button:disabled,select:disabled{opacity:.5;cursor:default}
@@ -30,7 +30,7 @@ pre{background:var(--code);color:#e6edf3;border-radius:8px;padding:12px;overflow
 .note{font-size:14px;margin-bottom:4px;color:var(--muted);font-style:italic}
 details.run{font-size:14px;margin-bottom:8px}details.run summary{cursor:pointer;color:var(--on)}details.run.bad summary{color:var(--warn)}
 .busy{font-size:14px;color:var(--muted)}.err{font-size:14px;color:var(--warn);border:1px solid var(--warn);border-radius:8px;padding:8px 12px;white-space:pre-wrap}
-.hint p{font:18px Georgia,serif;margin:0 0 10px}.hint button{display:block;margin:0 0 8px;text-align:left;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:6px 12px;cursor:pointer;font:inherit;font-size:14px}
+.hint p{font:18px Georgia,serif;margin:0 0 10px}.hint button{display:block;margin:0 0 8px;text-align:left;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px 10px;cursor:pointer;width:100%}
 footer{position:sticky;bottom:0;background:var(--bg);padding:8px 20px 20px}
 .box{display:flex;gap:8px;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px 10px}
 .box textarea{border:0;background:transparent;resize:none;outline:none;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
@@ -45,25 +45,40 @@ footer{position:sticky;bottom:0;background:var(--bg);padding:8px 20px 20px}
 <div class="panel">
 <label for="model">Model</label>
 <select id="model" disabled><option>Loading the AI library…</option></select>
-<div class="row"><button class="go" id="load" disabled>Download and start</button><button class="reset" id="reset-model" type="button" title="Restart the model and clear the conversation. The downloaded model remains cached." aria-label="Reset the AI model and clear the conversation">Reset model</button></div>
+<div class="row"><button class="go" id="load" disabled>Download and start</button><button class="reset" id="new-model" type="button" title="Choose a different model without resetting the conversation.">New model</button><button class="reset" id="reset-model" type="button" title="Restart the model and clear the conversation. The downloaded model will remain cached.">Reset model</button></div>
 <div class="prog"><div id="bar"></div></div>
 <div id="status">Starting…</div>
-<p class="sub" style="font-size:12px;margin-top:8px">The first start downloads the model once (1 to 5 GB depending on the size you pick) and keeps it for next time. Needs a recent desktop Chrome or Edge, an internet connection for that first download, and a graphics card with enough memory. Smaller models are faster but make more mistakes.</p>
+<p class="sub" style="font-size:12px;margin-top:8px">The first start downloads the model once (1 to 5 GB depending on the size you pick) and keeps it for next time. Needs a recent desktop Chrome or Edge with WebGPU enabled.</p>
 </div>
 <button class="tg" id="tcode" role="switch" aria-checked="true"><b>Run code: on</b><span>Tests JavaScript in a sandbox before answering</span></button>
 </header>
 <main id="log"><div class="hint" id="hint"><p>Paste code with a bug, or describe something to build.</p></div></main>
-<footer><div class="box"><textarea id="in" rows="2" disabled placeholder="Load a model first. Then paste code or ask for something. Shift+Enter adds a new line."></textarea><button id="send" aria-label="Send" disabled>↑</button></div></footer>
+<footer><div class="box"><textarea id="in" rows="2" disabled placeholder="Load a model first. Then paste code or ask for something. Shift+Enter adds a new line."></textarea><button id="send" aria-label="Send message">↑</button></div></footer>
 </div>
 <script type="module">
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x !== undefined) e.textContent = x; return e; };
 const MAX_STEPS = 6, RUN = /```run[ \t]*\n([\s\S]*?)```/;
-const STARTERS = ["Find the bug in this: function avg(a){let s=0;for(let i=0;i<=a.length;i++)s+=a[i];return s/a.length}", "Write a debounce function and prove it works by testing it", "Write a function that checks if a string is a palindrome, then test it on tricky inputs"];
+const STARTERS = ["Find the bug in this: function avg(a){let s=0;for(let i=0;i<=a.length;i++)s+=a[i];return s/a.length}", "Write a debounce function and prove it works by testing it", "Write a fun little game in plain JavaScript and test it", "Explain this code and point out edge cases"];
 let webllm = null, engine = null, busy = false, stopFlag = false, code = true, api = [];
 const setStatus = (cls, t) => { $("status").className = cls; $("status").textContent = t; };
 STARTERS.forEach((s) => { const b = el("button", "", s); b.onclick = () => send(s); $("hint").appendChild(b); });
 $("tcode").onclick = () => { code = $("tcode").getAttribute("aria-checked") !== "true"; $("tcode").setAttribute("aria-checked", code); $("tcode").querySelector("b").textContent = "Run code: " + (code ? "on" : "off"); };
+$("new-model").onclick = () => {
+  stopFlag = true;
+  if (engine && typeof engine.interruptGenerate === "function") {
+    try { engine.interruptGenerate(); } catch (e) {}
+  }
+  engine = null;
+  busy = false;
+  $("model").disabled = false;
+  $("load").disabled = false;
+  $("in").disabled = true;
+  $("send").disabled = true;
+  $("send").textContent = "↑";
+  $("bar").style.width = "0%";
+  setStatus("", "Pick a different model and press Download and start.");
+};
 $("reset-model").onclick = () => {
   if (confirm("Reset the model and clear this conversation? The downloaded model will remain cached.")) location.reload();
 };
@@ -87,17 +102,18 @@ async function init() {
   const pick = (saved && list.find((m) => m.model_id === saved)) || list.find((m) => /Coder-3B/i.test(m.model_id)) || list.find((m) => /Coder-1\.5B/i.test(m.model_id)) || list[0];
   sel.value = pick.model_id; sel.disabled = false; $("load").disabled = false;
   let reachable = true; try { await fetch("https://huggingface.co/", { mode: "no-cors" }); } catch (e) { reachable = false; }
-  if (!reachable) { setStatus("bad", "This page can’t reach the model download site (huggingface.co). That happens when there is no internet, when an ad or privacy blocker is in the way, or when the page runs inside a hosted viewer such as a Claude artifact, which blocks downloads from other sites. Save dev_agent_browser.html and open it from your computer."); return; }
+  if (!reachable) { setStatus("bad", "This page can’t reach the model download site (huggingface.co). That happens when there is no internet, when an ad or privacy blocker is in the way, or when a hosted viewer blocks remote access."); }
   if (saved && saved === pick.model_id) loadModel(); else setStatus("", "Pick a model and press Download and start.");
 }
 async function loadModel() {
   const id = $("model").value; $("model").disabled = true; $("load").disabled = true; setStatus("", "Starting…");
   try {
-    engine = await webllm.CreateMLCEngine(id, { initProgressCallback: (p) => { $("bar").style.width = Math.round((p.progress || 0) * 100) + "%"; setStatus("", p.text || "Loading…"); }, appConfig: { ...webllm.prebuiltAppConfig, useIndexedDBCache: true } });
+    engine = await webllm.CreateMLCEngine(id, { initProgressCallback: (p) => { $("bar").style.width = Math.round((p.progress || 0) * 100) + "%"; setStatus("", p.text || "Loading…"); }, progressCallback: (p) => { $("bar").style.width = Math.round((p.progress || 0) * 100) + "%"; } });
     try { localStorage.setItem("browseragent-model", id); } catch (e) {}
-    $("bar").style.width = "100%"; setStatus("ok", "Ready. The model is running on your device."); $("in").disabled = false; $("send").disabled = false; $("in").placeholder = "Paste code or ask for something. Shift+Enter adds a new line."; $("in").focus();
+    $("bar").style.width = "100%"; setStatus("ok", "Ready. The model is running on your device."); $("in").disabled = false; $("send").disabled = false; $("in").placeholder = "Paste code or ask for something. Shift+Enter adds a new line.";
   } catch (e) { engine = null; $("model").disabled = false; $("load").disabled = false; const msg = String((e && e.message) || e);
-    setStatus("bad", /fetch|network|load failed/i.test(msg) ? "The model files could not be downloaded (" + msg + "). Likely causes: no internet, an ad or privacy blocker, or a hosted viewer that blocks downloads from other sites. Open dev_agent_browser.html from your computer and try again." : "Could not start this model: " + msg + " Try a smaller one."); }
+    setStatus("bad", /fetch|network|load failed/i.test(msg) ? "The model files could not be downloaded (" + msg + "). Likely causes: no internet, an ad or privacy blocker, or a hosted viewer that blocks remote downloads." : "Could not start this model: " + msg);
+  }
 }
 $("load").onclick = loadModel;
 
@@ -133,7 +149,7 @@ function renderAnswer(box, text) {
 }
 function addStep(box, s) {
   if (s.t === "note") box.appendChild(el("div", "note", s.text));
-  else { const d = el("details", "run" + (s.r.ok ? "" : " bad")); d.appendChild(el("summary", "", "Ran code, " + (s.r.ok ? "finished" : "hit an error"))); d.appendChild(el("pre", "", s.code + "\n\n→ " + fmtResult(s.r))); box.appendChild(d); }
+  else { const d = el("details", "run" + (s.r.ok ? "" : " bad")); d.appendChild(el("summary", "", "Ran code, " + (s.r.ok ? "finished" : "hit an error"))); d.appendChild(el("pre", "", s.code + "\n" + fmtResult(s.r))); d.appendChild(el("div", "note", s.r.ok ? "Code ran successfully." : "The code failed; fix the issue and try again.")); box.appendChild(d); }
 }
 const down = () => scrollTo({ top: document.body.scrollHeight });
 
@@ -155,9 +171,7 @@ async function send(text) {
   busy = true; stopFlag = false; $("hint")?.remove(); $("in").value = ""; $("send").textContent = "■";
   const log = $("log"); log.appendChild(el("div", "u", q));
   const turn = el("div"); log.appendChild(turn); const status = el("div", "busy", "Thinking…"); log.appendChild(status); down();
-  const system = { role: "system", content: "You are a careful coding agent running inside a browser. " + (code
-    ? "To test JavaScript, write ONE code block that starts with ```run and ends with ``` and then stop writing. You will receive its output in the next message. Use console.log to show results. After you see the output, fix any problems and test again if needed. When everything works, give a concise final answer with the final code in a normal ```js block (never ```run) and say how you checked it. You can only run JavaScript; for other languages, reason carefully and say the code is untested. "
-    : "You cannot run code, so reason carefully and say your code is untested. ") + "When analyzing a bug, find the root cause first. Keep answers short." };
+  const system = { role: "system", content: "You are a careful coding agent running inside a browser. " + (code ? "To test JavaScript, write ONE code block that starts with ```run and ends with ``` and then stop writing. You will receive its output in the next message. Use console.log to show results. Keep answers short and include any important details in the final answer." : "You cannot run code, so reason carefully and say your code is untested. ") + "When analyzing a bug, find the root cause first. Keep answers short." };
   let msgs = [...api, { role: "user", content: q }], final = "";
   try {
     for (let i = 0; i < MAX_STEPS && !stopFlag; i++) {
