@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10131c">
+  <meta name="description" content="Create images from text prompts with Skippy's browser-based image generation tool.">
+  <title>Skippy — Image Studio</title>
+  <style>
+    :root{color-scheme:dark;--bg:#10131c;--panel:#191e2a;--panel2:#202737;--line:#30394a;--ink:#f2f5fb;--muted:#a3aec0;--accent:#a9f05a;--accent-ink:#17200c;--danger:#ff8c82}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -20%,#29354b 0,transparent 55%),var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.app{max-width:900px;margin:auto;padding:0 22px 40px}header{height:78px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff14;gap:12px}.brand{display:flex;align-items:center;gap:12px}.avatar{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#d9ff9c,#81d539);color:#18220d;font-weight:900}h1{font-size:19px;margin:0}header p{margin:0;color:var(--muted);font-size:13px}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.panel{margin:24px 0;padding:22px;border:1px solid var(--line);border-radius:18px;background:#171c27e8}.eyebrow{color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:750}h2{font-size:26px;margin:4px 0 8px}p{color:var(--muted)}label{display:block;font-weight:650;margin:16px 0 7px}textarea,input{width:100%;border:1px solid var(--line);border-radius:11px;background:#10141e;color:var(--ink);font:inherit;padding:12px}textarea{min-height:100px;resize:vertical}input:focus,textarea:focus{outline:2px solid #a9f05a88;border-color:var(--accent)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}button,.button{border:0;border-radius:11px;padding:11px 16px;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:750;cursor:pointer}button:disabled{opacity:.55;cursor:wait}.button.secondary{display:inline-block;background:var(--panel2);border:1px solid var(--line);color:var(--ink)}.note{font-size:13px;line-height:1.55}.status{min-height:24px;margin:12px 0 0;color:var(--muted)}.status.error{color:var(--danger)}.preview{display:none;margin-top:20px;text-align:center}.preview.visible{display:block}.preview img{display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:14px;background:#0b0e15;object-fit:contain}.preview-actions{justify-content:center}.security{padding:12px 14px;border:1px solid #a9f05a38;border-radius:11px;background:#a9f05a0b}.fine{font-size:12px;color:var(--muted);margin-top:22px}@media(max-width:600px){.app{padding:0 14px 28px}.grid{grid-template-columns:1fr}.panel{padding:17px}header{height:68px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand"><div class="avatar" aria-hidden="true">S</div><div><h1>Skippy Image Studio</h1><p>Turn a prompt into a picture.</p></div></div>
+      <a href="./">← Back to chat</a>
+    </header>
+    <main>
+      <section class="panel" aria-labelledby="heading">
+        <div class="eyebrow">Creative tools</div>
+        <h2 id="heading">What should we imagine?</h2>
+        <p>Describe the image you want. Skippy will send the prompt to the image-generation service and show the result here.</p>
+        <form id="image-form">
+          <label for="prompt">Image prompt</label>
+          <textarea id="prompt" required maxlength="1200" placeholder="A tiny greenhouse on the moon, warm cinematic lighting, detailed illustration…"></textarea>
+          <div class="grid">
+            <div><label for="model">Model <span class="note">(optional)</span></label><input id="model" type="text" placeholder="Use the service default" autocomplete="off"></div>
+            <div><label for="api-key">Publishable API key <span class="note">(optional)</span></label><input id="api-key" type="password" placeholder="pk_… — never enter a secret key" autocomplete="off"></div>
+          </div>
+          <p class="security note"><strong>Privacy:</strong> Image prompts are sent to Pollinations to generate images. If authentication is required, use only a publishable key intended for browser use—never paste a secret key here. The key is kept only in this page and is not saved.</p>
+          <div class="actions"><button id="generate" type="submit">Generate image</button><button id="copy-prompt" class="button secondary" type="button">Copy prompt</button></div>
+          <p id="status" class="status" role="status" aria-live="polite"></p>
+        </form>
+        <section id="preview" class="preview" aria-label="Generated image">
+          <img id="result" alt="Generated image will appear here">
+          <div class="actions preview-actions"><button id="again" type="button">Generate another</button><a id="download" class="button secondary" download="skippy-generated-image.png">Download image</a><a id="open-image" class="button secondary" target="_blank" rel="noopener noreferrer">Open image</a></div>
+        </section>
+        <p class="fine"><a href="https://gen.pollinations.ai/docs" target="_blank" rel="noopener noreferrer">Pollinations API documentation</a></p>
+      </section>
+    </main>
+  </div>
+  <script>
+    const form=document.getElementById('image-form');
+    const promptInput=document.getElementById('prompt');
+    const modelInput=document.getElementById('model');
+    const keyInput=document.getElementById('api-key');
+    const generateButton=document.getElementById('generate');
+    const status=document.getElementById('status');
+    const preview=document.getElementById('preview');
+    const result=document.getElementById('result');
+    let lastPrompt='';
+
+    function setStatus(message,error=false){status.textContent=message;status.classList.toggle('error',error);}
+    function makeImageUrl(text){
+      const url=new URL(`https://gen.pollinations.ai/image/${encodeURIComponent(text)}`);
+      const model=modelInput.value.trim();
+      const key=keyInput.value.trim();
+      if(model)url.searchParams.set('model',model);
+      if(key)url.searchParams.set('key',key);
+      return url.toString();
+    }
+    function generate(text){
+      const cleaned=text.trim();
+      if(!cleaned){setStatus('Enter a prompt before generating.',true);promptInput.focus();return;}
+      lastPrompt=cleaned;
+      generateButton.disabled=true;
+      document.getElementById('again').disabled=true;
+      preview.classList.add('visible');
+      result.alt=`Generating image: ${cleaned}`;
+      setStatus('Creating your image… This may take a little while.');
+      const url=makeImageUrl(cleaned);
+      result.onload=()=>{
+        generateButton.disabled=false;
+        document.getElementById('again').disabled=false;
+        result.alt=`AI-generated image for: ${cleaned}`;
+        document.getElementById('download').href=url;
+        document.getElementById('open-image').href=url;
+        setStatus('Image ready. You can download it or open it in a new tab.');
+      };
+      result.onerror=()=>{
+        generateButton.disabled=false;
+        document.getElementById('again').disabled=false;
+        result.removeAttribute('src');
+        setStatus('Could not load the generated image. Check your connection, prompt, and API key, then try again.',true);
+      };
+      result.src=url;
+    }
+    form.addEventListener('submit',event=>{event.preventDefault();generate(promptInput.value);});
+    document.getElementById('again').addEventListener('click',()=>generate(lastPrompt));
+    document.getElementById('copy-prompt').addEventListener('click',async()=>{
+      if(!promptInput.value.trim()){setStatus('Write a prompt first.',true);return;}
+      try{await navigator.clipboard.writeText(promptInput.value);setStatus('Prompt copied.');}
+      catch{setStatus('Clipboard access is unavailable in this browser.',true);}
+    });
+  </script>
+</body>
+</html>
