@@ -4,58 +4,61 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10131c">
-  <meta name="description" content="Chat with Skippy, a witty AI assistant that runs in your browser.">
+  <meta name="description" content="Chat with Skippy, a witty AI assistant that runs in your browser, or create images from prompts.">
   <title>Skippy — AI Chat</title>
   <style>
     :root{color-scheme:dark;--bg:#10131c;--panel:#191e2a;--panel-2:#202737;--line:#30394a;--ink:#f2f5fb;--muted:#a3aec0;--accent:#a9f05a;--accent-ink:#17200c;--user:#293347;--danger:#ff8c82;--shadow:0 18px 60px #0005}
-    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#29354b 0,transparent 55%),var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
-    button,select,textarea{font:inherit}button{cursor:pointer}button:disabled,select:disabled,textarea:disabled{opacity:.55;cursor:not-allowed}
-    .app{max-width:980px;min-height:100vh;margin:auto;display:flex;flex-direction:column;padding:0 22px}
-    header{height:78px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff14;gap:12px}
-    .brand{display:flex;align-items:center;gap:12px}.avatar{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#d9ff9c,#81d539);color:#18220d;font-weight:900;font-size:23px;box-shadow:0 5px 25px #a9f05a30}.brand h1{font-size:18px;margin:0;letter-spacing:.02em}.brand p{margin:1px 0 0;color:var(--muted);font-size:12px}.actions{display:flex;gap:8px}.quiet{color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 11px}.quiet:hover{color:var(--ink);background:#ffffff08}
-    .setup{margin:18px 0 8px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:#171c27e8;box-shadow:var(--shadow)}.setup-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.setup-title{font-size:13px;font-weight:700}.setup-note{font-size:12px;color:var(--muted);margin:3px 0 0}.model-controls{display:flex;gap:8px;align-items:center}.model-controls select{max-width:310px;min-width:190px;background:var(--panel-2);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px}.primary{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 14px;font-weight:750}.primary:hover{filter:brightness(1.05)}#progress{height:4px;background:#ffffff12;border-radius:5px;margin-top:12px;overflow:hidden}#bar{height:100%;width:0;background:var(--accent);transition:width .2s}#status{font-size:12px;color:var(--muted);margin-top:7px;min-height:18px}#status.ready{color:var(--accent)}#status.error{color:var(--danger)}
-    main{flex:1;display:flex;flex-direction:column;width:100%;padding:26px 0 14px}.welcome{margin:auto;text-align:center;max-width:600px;padding:40px 10px}.welcome .big{font-size:58px;filter:drop-shadow(0 7px 20px #a9f05a30)}.welcome h2{font-size:28px;margin:8px 0}.welcome p{color:var(--muted);margin:0 auto 24px;max-width:470px}.suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left}.suggestions button{color:var(--ink);background:#ffffff08;border:1px solid var(--line);border-radius:13px;padding:12px 14px}.suggestions button:hover{border-color:#a9f05a88;background:#a9f05a0b}.suggestions b{display:block;font-size:13px}.suggestions span{display:block;color:var(--muted);font-size:12px;margin-top:3px}
-    #chat{display:flex;flex-direction:column;gap:20px;padding:0 0 22px}.message{display:flex;gap:11px;max-width:88%;animation:appear .18s ease-out}.message.user{align-self:flex-end;flex-direction:row-reverse}.message .mini{flex:0 0 30px;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:#a9f05a20;color:var(--accent);font-weight:800;font-size:12px}.message.user .mini{background:#ffffff16;color:var(--ink)}.bubble{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px 14px;border-radius:15px;background:var(--panel);border:1px solid #ffffff0b}.message.user .bubble{background:var(--user);border-color:#ffffff0b}.message.assistant .bubble{line-height:1.7}.message.error .bubble{color:var(--danger)}.typing{color:var(--muted)}
-    footer{position:sticky;bottom:0;padding:12px 0 max(18px,env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 18%)}.composer{display:flex;align-items:flex-end;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:9px 10px 9px 15px;box-shadow:var(--shadow)}textarea{flex:1;resize:none;max-height:180px;min-height:44px;padding:10px 0;background:transparent;color:var(--ink);border:0;outline:0;line-height:1.5}textarea::placeholder{color:#8792a5}.send{flex:0 0 42px;height:42px;border:0;border-radius:13px;background:var(--accent);color:var(--accent-ink);font-size:20px;font-weight:800}.send.stop{background:#ff8c82}.footnote{text-align:center;color:#8792a5;font-size:11px;margin:8px 0 0}.footnote a{color:var(--muted)}
-    @keyframes appear{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-    @media(max-width:620px){.app{padding:0 14px}header{height:68px}.setup-top{align-items:flex-start;flex-direction:column}.model-controls{width:100%}.model-controls select{flex:1;min-width:0}.setup-note{max-width:100%}.message{max-width:96%}.suggestions{grid-template-columns:1fr}.welcome{padding:28px 4px}.welcome h2{font-size:24px}.actions .quiet{padding:7px 9px;font-size:12px}}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#29354b 0,transparent 55%),var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}button,select,textarea{font:inherit}button{cursor:pointer}button:disabled,select:disabled,textarea:disabled{opacity:.55;cursor:not-allowed}.app{max-width:980px;min-height:100vh;margin:auto;display:flex;flex-direction:column;padding:0 22px}header{min-height:78px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff14;gap:12px}.brand{display:flex;align-items:center;gap:12px}.avatar{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#d9ff9c,#81d539);color:#18220d;font-weight:900;font-size:23px;box-shadow:0 5px 25px #a9f05a30}.brand h1{font-size:18px;margin:0;letter-spacing:.02em}.brand p{margin:1px 0 0;color:var(--muted);font-size:12px}.actions{display:flex;gap:8px;align-items:center}.quiet,.mode-toggle{color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 11px}.quiet:hover,.mode-toggle:hover{color:var(--ink);background:#ffffff08}.mode-toggle{color:var(--accent);border-color:#a9f05a66;font-weight:700}.setup{margin:18px 0 8px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:#171c27e8;box-shadow:var(--shadow)}.setup-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.setup-title{font-size:13px;font-weight:700}.setup-note{font-size:12px;color:var(--muted);margin:3px 0 0}.model-controls{display:flex;gap:8px;align-items:center}.model-controls select{max-width:310px;min-width:190px;background:var(--panel-2);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px}.primary{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:9px 14px;font-weight:750}.primary:hover{filter:brightness(1.05)}#progress{height:4px;background:#ffffff12;border-radius:5px;margin-top:12px;overflow:hidden}#bar{height:100%;width:0;background:var(--accent);transition:width .2s}#status{font-size:12px;color:var(--muted);margin:7px 0 0;min-height:18px}#status.ready{color:var(--accent)}#status.error{color:var(--danger)}main{flex:1;display:flex;flex-direction:column;width:100%;padding:26px 0 14px}.welcome{margin:auto;text-align:center;max-width:600px;padding:40px 10px}.welcome .big{font-size:58px;filter:drop-shadow(0 7px 20px #a9f05a30)}.welcome h2{font-size:28px;margin:8px 0}.welcome p{color:var(--muted);margin:0 auto 24px;max-width:470px}.suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left}.suggestions button{color:var(--ink);background:#ffffff08;border:1px solid var(--line);border-radius:13px;padding:12px 14px;text-align:left}.suggestions button:hover{border-color:#a9f05a88;background:#a9f05a0b}.suggestions b,.suggestions span{display:block}.suggestions b{font-size:13px}.suggestions span{color:var(--muted);font-size:12px;margin-top:3px}#chat{display:flex;flex-direction:column;gap:20px;padding:0 0 22px}.message{display:flex;gap:11px;max-width:88%;animation:appear .18s ease-out}.message.user{align-self:flex-end;flex-direction:row-reverse}.message .mini{flex:0 0 30px;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:#a9f05a20;color:var(--accent);font-weight:800;font-size:12px}.message.user .mini{background:#ffffff16;color:var(--ink)}.bubble{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px 14px;border-radius:15px;background:var(--panel);border:1px solid #ffffff0b}.message.user .bubble{background:var(--user);border-color:#ffffff0b}.message.error .bubble{color:var(--danger)}.typing{color:var(--muted)}footer{position:sticky;bottom:0;padding:12px 0 max(18px,env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 18%)}.composer{display:flex;align-items:flex-end;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:9px 10px 9px 15px;box-shadow:var(--shadow)}textarea{flex:1;resize:none;max-height:180px;min-height:44px;padding:10px 0;background:transparent;color:var(--ink);border:0;outline:0;line-height:1.5}textarea::placeholder{color:#8792a5}.send{flex:0 0 42px;height:42px;border:0;border-radius:13px;background:var(--accent);color:var(--accent-ink);font-size:20px;font-weight:800}.send.stop{background:var(--danger)}.footnote{text-align:center;color:#8792a5;font-size:11px;margin:8px 0 0}#image-view{flex:1;min-height:600px;padding:16px 0}#image-frame{width:100%;height:min(78vh,900px);min-height:600px;border:1px solid var(--line);border-radius:16px;background:var(--bg)}[hidden]{display:none!important}@keyframes appear{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}@media(max-width:620px){.app{padding:0 14px}header{min-height:68px}.setup-top{align-items:flex-start;flex-direction:column}.model-controls{width:100%}.model-controls select{flex:1;min-width:0}.setup-note{max-width:100%}.message{max-width:96%}.suggestions{grid-template-columns:1fr}.welcome{padding:28px 4px}.welcome h2{font-size:24px}.actions .quiet{padding:7px 9px;font-size:12px}#image-view{padding:10px 0;min-height:520px}#image-frame{min-height:520px;height:75vh}}
   </style>
 </head>
 <body>
   <div class="app">
     <header>
       <div class="brand"><div class="avatar" aria-hidden="true">S</div><div><h1>Skippy</h1><p>Your brilliantly opinionated AI sidekick</p></div></div>
-      <div class="actions"><button class="quiet" id="clear" type="button" title="Start a fresh conversation">New chat</button></div>
+      <div class="actions"><button class="mode-toggle" id="mode-toggle" type="button" aria-pressed="false" aria-controls="chat-view image-view">🎨 Image generator</button><button class="quiet" id="clear" type="button" title="Start a fresh conversation">New chat</button></div>
     </header>
-    <section class="setup" aria-label="AI model setup">
-      <div class="setup-top"><div><div class="setup-title">Bring Skippy online</div><p class="setup-note">Runs privately in your browser. The first download can be large; no API key or account needed.</p></div><div class="model-controls"><select id="model" aria-label="Choose an AI model" disabled><option>Checking browser support…</option></select><button class="primary" id="load" type="button" disabled>Load model</button></div></div>
-      <div id="progress" aria-hidden="true"><div id="bar"></div></div><div id="status" role="status" aria-live="polite">Checking WebGPU support…</div>
-    </section>
-    <main><section id="chat" aria-live="polite" aria-label="Chat messages"></section>
-      <section id="welcome" class="welcome"><div class="big" aria-hidden="true">⚡</div><h2>Well, look who needs help.</h2><p>Ask me anything. I’ll bring the answers, the attitude, and—occasionally—an unnecessary reminder of how brilliant I am.</p><div class="suggestions">
-        <button type="button" data-prompt="Explain black holes like I’m curious but easily bored."><b>Explain something strange</b><span>Make the cosmos almost make sense.</span></button>
-        <button type="button" data-prompt="Help me plan a productive day without making it miserable."><b>Plan my day</b><span>Efficiency, with minimal human suffering.</span></button>
-        <button type="button" data-prompt="Give me three clever ideas for a weekend project."><b>Brainstorm ideas</b><span>Try to keep up with my imagination.</span></button>
-        <button type="button" data-prompt="Tell me a short joke worthy of a superior AI."><b>Entertain me</b><span>My comedy is almost as good as my intellect.</span></button>
-      </div></section>
-    </main>
-    <footer><form class="composer" id="form"><textarea id="input" rows="1" placeholder="Load a model to start chatting…" aria-label="Message Skippy" disabled></textarea><button class="send" id="send" type="submit" aria-label="Send message" disabled>↑</button></form><p class="footnote">Skippy runs on your device after the model downloads. AI can make mistakes—verify important information.</p></footer>
+    <div id="chat-view">
+      <section class="setup" aria-label="AI model setup">
+        <div class="setup-top"><div><div class="setup-title">Bring Skippy online</div><p class="setup-note">Runs privately in your browser. The first download can be large; no API key or account needed.</p></div><div class="model-controls"><select id="model" aria-label="Choose an AI model" disabled><option>Checking browser support…</option></select><button class="primary" id="load" type="button" disabled>Load model</button></div></div>
+        <div id="progress" aria-hidden="true"><div id="bar"></div></div><div id="status" role="status" aria-live="polite">Checking WebGPU support…</div>
+      </section>
+      <main><section id="chat" aria-live="polite" aria-label="Chat messages"></section>
+        <section id="welcome" class="welcome"><div class="big" aria-hidden="true">⚡</div><h2>Well, look who needs help.</h2><p>Ask me anything. I’ll bring the answers, the attitude, and—occasionally—an unnecessary reminder of how brilliant I am.</p>
+          <div class="suggestions">
+            <button type="button" data-prompt="Explain black holes like I’m curious but easily bored."><b>Explain something strange</b><span>Make the cosmos almost make sense.</span></button>
+            <button type="button" data-prompt="Help me plan a productive day without making it miserable."><b>Plan my day</b><span>Efficiency, with minimal human suffering.</span></button>
+            <button type="button" data-prompt="Give me three clever ideas for a weekend project."><b>Brainstorm ideas</b><span>Try to keep up with my imagination.</span></button>
+            <button type="button" data-prompt="Tell me a short joke worthy of a superior AI."><b>Entertain me</b><span>My comedy is almost as good as my intellect.</span></button>
+          </div>
+        </section>
+      </main>
+      <footer><form class="composer" id="form"><textarea id="input" rows="1" placeholder="Load a model to start chatting…" aria-label="Message Skippy" disabled></textarea><button class="send" id="send" type="submit" aria-label="Send message" disabled>↑</button></form><p class="footnote">Skippy runs on your device after the model downloads. AI can make mistakes—verify important information.</p></footer>
+    </div>
+    <section id="image-view" aria-label="Image generation" hidden><iframe id="image-frame" src="./image-generator.html" title="Skippy image generator" loading="lazy"></iframe></section>
   </div>
 <script type="module">
   const $ = (id) => document.getElementById(id);
   const chat = $('chat'), input = $('input'), sendButton = $('send');
   let webllm, engine, busy = false, stopRequested = false, history = [];
   const SYSTEM = `You are Skippy, a witty, confident, highly capable AI sidekick. Be helpful, clever, concise, and playfully sarcastic without being cruel. Occasionally make a light joke about your exceptional intelligence, but don't overdo it. Answer the user's actual question first. Be honest about uncertainty and never claim to be a real person or a fictional character. Use clear formatting and practical examples when useful.`;
-  function status(text, type=''){ $('status').textContent=text; $('status').className=type; }
-  function addMessage(role, text='', extra='') {
-    const row=document.createElement('div'); row.className=`message ${role} ${extra}`.trim();
-    const icon=document.createElement('div'); icon.className='mini'; icon.textContent=role==='user'?'YOU':'S'; icon.setAttribute('aria-hidden','true');
-    const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=text; row.append(icon,bubble); chat.appendChild(row); row.scrollIntoView({behavior:'smooth',block:'end'}); return bubble;
+  function status(text,type=''){ $('status').textContent=text; $('status').className=type; }
+  function addMessage(role,text='',extra=''){
+    const row=document.createElement('div');row.className=`message ${role} ${extra}`.trim();
+    const icon=document.createElement('div');icon.className='mini';icon.textContent=role==='user'?'YOU':'S';icon.setAttribute('aria-hidden','true');
+    const bubble=document.createElement('div');bubble.className='bubble';bubble.textContent=text;row.append(icon,bubble);chat.appendChild(row);row.scrollIntoView({behavior:'smooth',block:'end'});return bubble;
   }
   function resize(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,180)+'px';}
   input.addEventListener('input',resize);
   document.querySelectorAll('[data-prompt]').forEach(button=>button.addEventListener('click',()=>{input.value=button.dataset.prompt;resize();input.focus();if(engine)sendMessage();}));
-  $('clear').addEventListener('click',()=>{ if(busy)return; history=[]; chat.replaceChildren(); $('welcome').hidden=false; });
+  $('mode-toggle').addEventListener('click',()=>{
+    const showImages=$('image-view').hidden;
+    $('image-view').hidden=!showImages;
+    $('chat-view').hidden=showImages;
+    $('mode-toggle').setAttribute('aria-pressed',String(showImages));
+    $('mode-toggle').textContent=showImages?'💬 Back to chat':'🎨 Image generator';
+    if(showImages)$('image-frame').contentWindow?.postMessage({type:'skippy-image-view'},location.origin);
+  });
+  $('clear').addEventListener('click',()=>{if(busy)return;history=[];chat.replaceChildren();$('welcome').hidden=false;});
   $('form').addEventListener('submit',event=>{event.preventDefault();if(busy){stopRequested=true;engine?.interruptGenerate();}else sendMessage();});
   input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();if(!busy)sendMessage();}});
   async function loadLibrary(){return import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/+esm');}
@@ -89,13 +92,11 @@
       let answer='';response.textContent='';
       for await(const part of stream){if(stopRequested)break;answer+=(part.choices?.[0]?.delta?.content||'');response.textContent=answer||'…';}
       answer=answer.trim()||(stopRequested?'(Generation stopped.)':'I seem to have lost my train of thought. Try again.');response.textContent=answer;
-      if(!stopRequested)history.push({role:'assistant',content:answer});
-      if(history.length>20)history=history.slice(-20);
+      if(!stopRequested)history.push({role:'assistant',content:answer});if(history.length>20)history=history.slice(-20);
     }catch(error){response.textContent=`I hit a snag: ${error.message||error}`;response.parentElement.classList.add('error');history.pop();}
     finally{busy=false;stopRequested=false;sendButton.classList.remove('stop');sendButton.textContent='↑';sendButton.setAttribute('aria-label','Send message');input.focus();}
   }
   init();
-  // While generating, the same control becomes a stop button.
   const observer=new MutationObserver(()=>{if(busy){sendButton.classList.add('stop');sendButton.textContent='■';sendButton.setAttribute('aria-label','Stop generating');}});observer.observe(chat,{childList:true});
 </script>
 </body>
