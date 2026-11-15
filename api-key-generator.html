@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10131c">
+  <title>Local API Token Generator</title>
+  <style>
+    :root{color-scheme:dark;--bg:#10131c;--panel:#191e2a;--line:#30394a;--ink:#f2f5fb;--muted:#a3aec0;--accent:#a9f05a;--danger:#ff8c82}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{width:min(100%,620px);padding:24px;background:var(--panel);border:1px solid var(--line);border-radius:16px}h1{margin-top:0}p{color:var(--muted)}.warning{padding:12px;border:1px solid #735b28;border-radius:8px;color:#f5d58b;background:#302819}
+    .key{display:block;width:100%;margin:16px 0;padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:14px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;min-height:52px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}button{padding:10px 14px;border:0;border-radius:8px;background:var(--accent);color:#17200c;font:inherit;font-weight:650;cursor:pointer}button.secondary{border:1px solid var(--line);background:transparent;color:var(--ink)}button:disabled{opacity:.5;cursor:not-allowed}#status{min-height:1.5em;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Local API token generator</h1>
+    <p>Generate a random 256-bit token in this browser using the Web Crypto API. The token is not sent anywhere and is not saved by this page.</p>
+    <p class="warning"><strong>Important:</strong> This creates a random token only. It does not register a key with any API or add authentication to Skippy. A real API key must be issued and validated by a trusted server; never put a provider secret in a public static page.</p>
+    <output class="key" id="key" aria-live="polite">Select Generate token to create one.</output>
+    <div class="actions">
+      <button id="generate" type="button">Generate token</button>
+      <button id="copy" class="secondary" type="button" disabled>Copy</button>
+    </div>
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+  <script>
+    const keyOutput = document.getElementById('key');
+    const copyButton = document.getElementById('copy');
+    const status = document.getElementById('status');
+    let token = '';
+
+    function toBase64Url(bytes) {
+      let binary = '';
+      for (const byte of bytes) binary += String.fromCharCode(byte);
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+
+    document.getElementById('generate').addEventListener('click', () => {
+      if (!globalThis.crypto?.getRandomValues) {
+        token = '';
+        keyOutput.textContent = 'Secure random generation is unavailable in this browser.';
+        copyButton.disabled = true;
+        status.textContent = 'Use a modern browser over HTTPS.';
+        return;
+      }
+      const bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      token = toBase64Url(bytes);
+      keyOutput.textContent = token;
+      copyButton.disabled = false;
+      status.textContent = 'Token generated locally. Treat it as secret if you use it in your own system.';
+    });
+
+    copyButton.addEventListener('click', async () => {
+      if (!token) return;
+      try {
+        await navigator.clipboard.writeText(token);
+        status.textContent = 'Copied to clipboard.';
+      } catch {
+        status.textContent = 'Clipboard access was denied. Select and copy the token manually.';
+      }
+    });
+  </script>
+</body>
+</html>
